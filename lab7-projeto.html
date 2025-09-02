@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa - Comércio Exterior do Brasil (2025)</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    #mapa {
+      width: 100%;
+      height: 45vh;
+      margin-top: 20px;
+    }
+
+    #grafico {
+      width: 100%;
+      height: 40vh;
+      margin-top: 30px;
+    }
+
+    #controles {
+      margin: 20px;
+      font-family: sans-serif;
+    }
+
+    select {
+      padding: 5px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="controles">
+    <label for="tipo">Visualizar:</label>
+    <select id="tipo">
+      <option value="EXP">Exportações</option>
+      <option value="IMP">Importações</option>
+      <option value="BAL" selected>Balança Comercial</option>
+    </select>
+  </div>
+
+  <div id="mapa"></div>
+  <div id="grafico"></div>
+
+  <script>
+    let anoAtual = '2025'
+    let geoJson = null;
+    let dadosComercio = null;
+    let chart = echarts.init(document.getElementById('mapa'));
+    let grafico = echarts.init(document.getElementById('grafico'));
+
+    function formatarUnidade(valor) {
+      const abs = Math.abs(valor);
+      let unidade = "";
+      let numero = valor;
+
+      if (abs >= 1e12) {
+        numero = valor / 1e12;
+        unidade = "T";
+      } else if (abs >= 1e9) {
+        numero = valor / 1e9;
+        unidade = "B";
+      } else if (abs >= 1e6) {
+        numero = valor / 1e6;
+        unidade = "M";
+      } else if (abs >= 1e3) {
+        numero = valor / 1e3;
+        unidade = "K";
+      }
+
+      return numero.toFixed(1) + unidade;
+    }
+    
+    Promise.all([
+      fetch('Lab7-LuizSergioPompeu-world.json').then(res => res.json()),
+      fetch('Lab7-LuizSergioPompeu-BR-exportacoes_importacoes_2025.json').then(res => res.json())
+    ])
+    .then(([geoData, comercioData]) => {
+      geoJson = geoData;
+      dadosComercio = comercioData;
+      echarts.registerMap('world', geoJson);
+
+      atualizarMapa('BAL', anoAtual);
+      atualizarGraficoLinhas();
+    })
+    .catch(err => console.error('Erro ao carregar dados:', err));
+
+    function atualizarMapa(tipo, ano = anoAtual) {
+      anoAtual = ano;
+      const dados = dadosComercio[tipo][ano];
+      if (!dados) return;
+
+      const dadosConvertidos = dados.map(p => ({
+        name: p.name,
+        value: p.us_value
+      }));
+
+      const valores = dadosConvertidos.map(d => d.value);
+      const min = Math.min(...valores);
+      const max = Math.max(...valores);
+
+      let visualMapConfig = {};
+
+      if (tipo === 'EXP') {
+        visualMapConfig = {
+          min, max,
+          text: ['Mais exportado', 'Menos'],
+          inRange: { color: ['#d9f0d3', '#00441b'] },
+          formatter: value => "$" + formatarUnidade(value)
+        };
+      } else if (tipo === 'IMP') {
+        visualMapConfig = {
+          min, max,
+          text: ['Mais importado', 'Menos'],
+          inRange: { color: ['#fde0dd', '#67001f'] },
+          formatter: value => "$" + formatarUnidade(value)
+        };
+      } else if (tipo === 'BAL') {
+        const absMax = Math.max(Math.abs(min), Math.abs(max));
+        visualMapConfig = {
+          min: -absMax,
+          max: absMax,
+          text: ['Superavit', 'Déficit'],
+          inRange: { color: ['#b2182b', '#ffffff', '#2166ac'] },
+          formatter: value => "$" + formatarUnidade(value)
+        };
+      }
+
+      const option = {
+        title: {
+          text: `Comércio Exterior do Brasil (${ano}) - ${tipo === 'EXP' ? 'Exportações' : tipo === 'IMP' ? 'Importações' : 'Balança Comercial'}`,
+          left: 'center'
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: function(params) {
+            if (params.value != null && !isNaN(params.value)) {
+              return `${params.name}<br/>Valor: $${formatarUnidade(params.value)}`;
+            } else {
+              return `${params.name}<br/><i>(sem dados)</i>`;
+            }
+          }
+        },
+        visualMap: {
+          ...visualMapConfig,
+          left: 'left',
+          bottom: '5%',
+          calculable: true
+        },
+        series: [{
+          name: tipo,
+          type: 'map',
+          map: 'world',
+          roam: true,
+          emphasis: { label: { show: true } },
+          data: dadosConvertidos
+        }]
+      };
+
+      chart.setOption(option);
+    }
+
+    function calcularTotaisGlobais() {
+      const anos = Object.keys(dadosComercio.EXP).sort();
+
+      const totaisEXP = anos.map(ano => {
+        const dadosAno = dadosComercio.EXP[ano];
+        return dadosAno.reduce((soma, p) => soma + (p.us_value || 0), 0);
+      });
+
+      const totaisIMP = anos.map(ano => {
+        const dadosAno = dadosComercio.IMP[ano];
+        return dadosAno.reduce((soma, p) => soma + (p.us_value || 0), 0);
+      });
+
+      const totaisBAL = totaisEXP.map((val, i) => val - totaisIMP[i]);
+
+      return { anos, exp: totaisEXP, imp: totaisIMP, bal: totaisBAL };
+    }
+
+    function atualizarGraficoLinhas() {
+      const { anos, exp, imp, bal } = calcularTotaisGlobais();
+      const tipoSelecionado = document.getElementById('tipo').value;
+      const mapTipoToSerie = { "EXP": "Exportações", "IMP": "Importações", "BAL": "Balança Comercial" };
+      const serieDestacada = mapTipoToSerie[tipoSelecionado];
+
+      const option = {
+        title: { text: 'Totais por Ano:', left: 'left' },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'line' },
+          valueFormatter: value => "$" + formatarUnidade(value)
+        },
+        dataZoom: [
+          { show: true, realtime: true, start: 0, end: 1000, xAxisIndex: [0, 1] },
+          { type: 'inside', realtime: true, start: 0, end: 1000, xAxisIndex: [0, 1] }
+        ],
+        legend: { top: 30, data: ['Exportações', 'Importações', 'Balança Comercial'] },
+        xAxis: { type: 'category', data: anos },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            formatter: function (value) {
+              return "$" + formatarUnidade(value);
+            }
+          }
+        },
+        series: [
+          {
+            name: 'Exportações',
+            type: 'line',
+            data: exp,
+            smooth: true,
+            lineStyle: { color: '#00441b', width: 4, opacity: serieDestacada === 'Exportações' ? 1 : 0.2 },
+            itemStyle: { opacity: serieDestacada === 'Exportações' ? 1 : 0.2 }
+          },
+          {
+            name: 'Importações',
+            type: 'line',
+            data: imp,
+            smooth: true,
+            lineStyle: { color: '#67001f', width: 4, opacity: serieDestacada === 'Importações' ? 1 : 0.2 },
+            itemStyle: { opacity: serieDestacada === 'Importações' ? 1 : 0.2 }
+          },
+          {
+            name: 'Balança Comercial',
+            type: 'line',
+            data: bal,
+            smooth: true,
+            lineStyle: { color: '#2166ac', type: 'dashed', width: 4, opacity: serieDestacada === 'Balança Comercial' ? 1 : 0.2 },
+            itemStyle: { opacity: serieDestacada === 'Balança Comercial' ? 1 : 0.2 }
+          }
+        ]
+      };
+
+      grafico.setOption(option);
+
+      grafico.on('highlight', function (event) {
+        const anoSelecionado = event.batch?.[0]?.dataIndex;
+        if (anoSelecionado != null) {
+          const tipoSelecionado = document.getElementById('tipo').value;
+          const ano = calcularTotaisGlobais().anos[anoSelecionado];
+          atualizarMapa(tipoSelecionado, ano);
+        }
+      });
+    }
+
+    document.getElementById('tipo').addEventListener('change', function () {
+      const tipoSelecionado = this.value;
+      atualizarMapa(tipoSelecionado, anoAtual);
+      atualizarGraficoLinhas();
+    });
+  </script>
+</body>
+</html>

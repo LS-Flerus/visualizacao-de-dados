@@ -42,7 +42,7 @@
   <div id="grafico"></div>
 
   <script>
-    let anoAtual = '2025'
+    let anoAtual = '2025';
     let geoJson = null;
     let dadosComercio = null;
     let chart = echarts.init(document.getElementById('mapa'));
@@ -69,7 +69,7 @@
 
       return numero.toFixed(1) + unidade;
     }
-    
+
     Promise.all([
       fetch('Lab7-LuizSergioPompeu-world.json').then(res => res.json()),
       fetch('Lab7-LuizSergioPompeu-BR-exportacoes_importacoes_2025.json').then(res => res.json())
@@ -183,12 +183,27 @@
       const mapTipoToSerie = { "EXP": "Exportações", "IMP": "Importações", "BAL": "Balança Comercial" };
       const serieDestacada = mapTipoToSerie[tipoSelecionado];
 
+      const coresLinha = {
+        'Exportações': '#00441b',
+        'Importações': '#67001f',
+        'Balança Comercial': '#2166ac'
+      };
+
       const option = {
         title: { text: 'Totais por Ano:', left: 'left' },
         tooltip: {
           trigger: 'axis',
           axisPointer: { type: 'line' },
-          valueFormatter: value => "$" + formatarUnidade(value)
+          formatter: function(params) {
+            let tooltipHTML = 'Ano ' + params[0].axisValue + '<br/>';
+            params.forEach(p => {
+              const corLinha = coresLinha[p.seriesName];
+              const opacidade = (p.seriesName === serieDestacada) ? 1 : 0.2;
+              tooltipHTML += `<span style="display:inline-block;width:10px;height:10px;background-color:${corLinha};opacity:${opacidade};margin-right:5px;border-radius:50%;"></span>`;
+              tooltipHTML += `${p.seriesName}: $${formatarUnidade(p.value)}<br/>`;
+            });
+            return tooltipHTML;
+          }
         },
         dataZoom: [
           { show: true, realtime: true, start: 0, end: 1000, xAxisIndex: [0, 1] },
@@ -210,31 +225,34 @@
             type: 'line',
             data: exp,
             smooth: true,
-            lineStyle: { color: '#00441b', width: 4, opacity: serieDestacada === 'Exportações' ? 1 : 0.2 },
-            itemStyle: { opacity: serieDestacada === 'Exportações' ? 1 : 0.2 }
+            lineStyle: { color: coresLinha['Exportações'], width: 4, opacity: serieDestacada === 'Exportações' ? 1 : 0.2 },
+            itemStyle: { opacity: serieDestacada === 'Exportações' ? 1 : 0.2 },
+            emphasis: { focus: 'series', itemStyle: { opacity: serieDestacada === 'Exportações' ? 1 : 0.2 } }
           },
           {
             name: 'Importações',
             type: 'line',
             data: imp,
             smooth: true,
-            lineStyle: { color: '#67001f', width: 4, opacity: serieDestacada === 'Importações' ? 1 : 0.2 },
-            itemStyle: { opacity: serieDestacada === 'Importações' ? 1 : 0.2 }
+            lineStyle: { color: coresLinha['Importações'], width: 4, opacity: serieDestacada === 'Importações' ? 1 : 0.2 },
+            itemStyle: { opacity: serieDestacada === 'Importações' ? 1 : 0.2 },
+            emphasis: { focus: 'series', itemStyle: { opacity: serieDestacada === 'Importações' ? 1 : 0.2 } }
           },
           {
             name: 'Balança Comercial',
             type: 'line',
             data: bal,
             smooth: true,
-            lineStyle: { color: '#2166ac', type: 'dashed', width: 4, opacity: serieDestacada === 'Balança Comercial' ? 1 : 0.2 },
-            itemStyle: { opacity: serieDestacada === 'Balança Comercial' ? 1 : 0.2 }
+            lineStyle: { color: coresLinha['Balança Comercial'], type: 'dashed', width: 4, opacity: serieDestacada === 'Balança Comercial' ? 1 : 0.2 },
+            itemStyle: { opacity: serieDestacada === 'Balança Comercial' ? 1 : 0.2 },
+            emphasis: { focus: 'series', itemStyle: { opacity: serieDestacada === 'Balança Comercial' ? 1 : 0.2 } }
           }
         ]
       };
 
       grafico.setOption(option);
 
-      grafico.on('highlight', function (event) {
+      grafico.on('highlight', function(event) {
         const anoSelecionado = event.batch?.[0]?.dataIndex;
         if (anoSelecionado != null) {
           const tipoSelecionado = document.getElementById('tipo').value;

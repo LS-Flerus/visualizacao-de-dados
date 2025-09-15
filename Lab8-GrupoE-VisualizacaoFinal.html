@@ -78,12 +78,13 @@
         background-color: #a4dceb;
       }
       #chart { width:100%; height:550px;}
-      #title {margin-left: 10px; margin-top: 30px; font-weight:300; font-size:x-large; position:relative; color: rgb(115, 115, 117); font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
+      #title {margin-left: 10px; margin-top: 30px; font-weight:600; font-size:x-large; position:relative; color: rgb(115, 115, 117); font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
       #stationFilters { display:none;}
       #titleSpan {
           cursor: pointer;
           color: rgb(117, 181, 255);
           border: 1px dashed rgb(117, 181, 255);
+          margin-left: 35px;
           border-radius: 6px;
           padding: 4px;
           transition: all 0.3s ease;
@@ -179,9 +180,9 @@
           font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
           text-align: center;
           margin-top: 30px;
-          font-weight: 300;
+          font-weight: 600;
           font-size: x-large;
-          color: rgb(115, 115, 117);
+          color: "#333";
       }
 
       #radarSubtitle {
@@ -189,7 +190,7 @@
           text-align: center;
           margin-top: 10px;
           margin-bottom: 10px;
-          font-weight: 300;
+          font-weight: 600;
           font-size: medium;
           color: rgb(115, 115, 117);
       }
@@ -336,6 +337,7 @@
       <li>Para filtrar as viagens pelo seu tempo de atraso, utilize a barra lateral direita mais interna;</li>
       <li>Passe o cursor pelos pontos do gráfico para exibir mais informações sobre todas as viagens realizadas naquela data e hora;</li>
       <li>Clique em um dos pontos no gráfico para abrir uma visualização mais detalhada sobre informações das viagens ocorridas naquela data e hora.</li>
+      <li>Passe o cursor por cima do gráfico de radar de uma viagem para exibir mais informações sobre ela;</li>
     </ul>
     </div>
 
@@ -762,7 +764,12 @@
                   { name: 'Compras antecipadas (%)', max: 100 },
                   { name: 'Pedidos reembolso (%)', max: 100 },
                   { name: 'Preço médio (£)', max: 200 },
-              ]
+              ],
+              axisName: {
+                  color: '#8a8b93',
+                  fontSize: 14,
+                  fontWeight: 'bold'
+              },
           },
           series: [{
               type: 'radar',

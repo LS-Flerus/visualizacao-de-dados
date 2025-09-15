@@ -79,7 +79,10 @@
       }
       #chart { width:100%; height:550px;}
       #title {margin-left: 10px; margin-top: 30px; font-weight:600; font-size:x-large; position:relative; color: rgb(115, 115, 117); font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
-      #stationFilters { display:none;}
+      #stationFilters { 
+        display:none;
+        margin-left: 35px;
+      }
       #titleSpan {
           cursor: pointer;
           color: rgb(117, 181, 255);
@@ -147,7 +150,6 @@
 
       #applyBtn { margin-left:6px; vertical-align: middle; font-weight: 700; color: rgb(115, 115, 117); cursor: pointer; border: none; height: 40px; width: 40px; border-radius: 100%; background: #eeeeee; padding:0 10px; transition: 0.4s;}
       #applyBtn:hover{ background: #dddddd; }
-      #titleSpan {cursor:pointer; color: rgb(117, 181, 255); border: 1px dashed rgb(117, 181, 255); border-radius: 6px; padding: 4px;}
       #overlay {
         text-align: center;
         position: fixed;
@@ -336,8 +338,8 @@
       <li>Aplique zoom na visualização utilizando a roda de rolagem do mouse, em conjunto com o cursor, ou as barras mais externas;</li>
       <li>Para filtrar as viagens pelo seu tempo de atraso, utilize a barra lateral direita mais interna;</li>
       <li>Passe o cursor pelos pontos do gráfico para exibir mais informações sobre todas as viagens realizadas naquela data e hora;</li>
-      <li>Clique em um dos pontos no gráfico para abrir uma visualização mais detalhada sobre informações das viagens ocorridas naquela data e hora.</li>
-      <li>Passe o cursor por cima do gráfico de radar de uma viagem para exibir mais informações sobre ela;</li>
+      <li>Clique em um dos pontos na visualização para abrir um gráfico de radar sobre as informações das viagens ocorridas naquela data e hora;</li>
+      <li>Passe o cursor por cima do gráfico de radar de uma viagem para exibir mais informações sobre ela.</li>
     </ul>
     </div>
 
